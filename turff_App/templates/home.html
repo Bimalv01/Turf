@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turf Search</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .search-form {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+        }
+        .result-list li {
+            background-color: #ffffff;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .btn-book {
+            float: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center my-4">Search for Turfs</h1>
+
+        <!-- Search Form -->
+        <form method="GET" class="search-form">
+            {% csrf_token %}
+            {{ form.turf_type }} <!-- Only display turf type from the form -->
+            
+            <!-- Dropdown for Available Locations -->
+            <div class="form-group">
+                <label for="location">Available Locations</label>
+                <select name="location" id="location" class="form-control">
+                    <option value="">Select Location</option>
+                    {% for location in locations %}
+                        <option value="{{ location }}">{{ location }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+
+        <!-- Search Results -->
+        <h2 class="mt-4">Search Results</h2>
+        <ul class="list-group result-list">
+            {% if results %}
+                {% for turf in results %}
+                    <li class="list-group-item">
+                        <div>
+                            <strong>{{ turf.turffname }}</strong><br>
+                            {{ turf.location }} - {{ turf.turf_type }}
+                            <form action="{% url 'book_turf' turf.id %}" method="GET" class="btn-book">
+                                <button type="submit" class="btn btn-success btn-sm">Book Now</button>
+                            </form>
+                        </div>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item">No turfs found.</li>
+                {% endfor %}
+            {% else %}
+                <li class="list-group-item">No search results yet.</li>
+            {% endif %}
+        </ul>
+    </div>
+
+    <!-- Bootstrap JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.6.0/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

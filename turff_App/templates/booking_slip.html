@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Invoice</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #f8f9fa; 
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+        }
+        .header h1 { 
+            color: #007bff; 
+            font-weight: bold; 
+        }
+        .content { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); 
+        }
+        .footer { 
+            margin-top: 30px; 
+            text-align: center; 
+            color: #6c757d; 
+        }
+        .total-price {
+            font-size: 1.5em; 
+            font-weight: bold; 
+            color: #28a745; 
+        }
+        table {
+            width: 100%; 
+            margin: 20px 0; 
+            border-collapse: collapse; 
+        }
+        th, td {
+            padding: 10px; 
+            border: 1px solid #dee2e6; 
+            text-align: left; 
+        }
+        th {
+            background-color: #007bff; 
+            color: white; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="header">
+            <h1>Booking Invoice</h1>
+            <h2>Turf Booking Details</h2>
+        </div>
+        <div class="content">
+            <table>
+                <tr>
+                    <th>Turf Name</th>
+                    <td>{{ booking.turf.turffname }}</td>
+                </tr>
+                <tr>
+                    <th>Location</th>
+                    <td>{{ booking.turf.location }}</td>
+                </tr>
+                <tr>
+                    <th>User Name</th>
+                    <td>{{ booking.user_name }}</td>
+                </tr>
+                <tr>
+                    <th>User Phone</th>
+                    <td>{{ booking.user_phone }}</td>
+                </tr>
+                <tr>
+                    <th>Booking Date</th>
+                    <td>{{ booking.booking_date }}</td>
+                </tr>
+                <tr>
+                    <th>Start Time</th>
+                    <td>{{ booking.start_time }}</td>
+                </tr>
+                <tr>
+                    <th>End Time</th>
+                    <td>{{ booking.end_time }}</td>
+                </tr>
+                <tr>
+                    <th>Total Price</th>
+                    <td class="total-price">₹ {{ total_price }}</td>
+                </tr>
+            </table>
+        </div>
+        <div class="footer">
+            <p>Thank you for booking with us!</p>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

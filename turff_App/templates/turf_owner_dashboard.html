@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turf Owner Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+        }
+        h1 {
+            color: #007bff;
+        }
+        .booking-list {
+            margin-top: 20px;
+        }
+        .cancel-button {
+            float: right; /* Align cancel button to the right */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Turf Owner Dashboard</h1>
+        
+        <div class="mt-4">
+            <h2>Your Turfs</h2>
+            <a href="{% url 'add_turf' %}" class="btn btn-primary mb-3">Add New Turf</a>
+            <ul class="list-group">
+                {% for turf in turfs %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ turf.turffname }} - Price:  ₹ {{ turf.price }} per hour
+                    </li>
+                {% empty %}
+                    <li class="list-group-item">No turfs available.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="booking-list">
+            <h2>Your Bookings</h2>
+            <form method="GET" class="form-inline mb-3">
+                <label for="filter-date" class="mr-2">Filter by Date:</label>
+                <input type="date" id="filter-date" name="date" class="form-control mr-2" required>
+                <button type="submit" class="btn btn-secondary">Filter</button>
+            </form>
+
+            {% if bookings %}
+                <ul class="list-group">
+                    {% for booking in bookings %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>User Name:</strong> {{ booking.user_name }} <br>
+                                <strong>Phone:</strong> {{ booking.user_phone }} <br>
+                                <strong>Turf:</strong> {{ booking.turf.turffname }} <br>
+                                <strong>Booking Date:</strong> {{ booking.booking_date }} <br>
+                                <strong>Start Time:</strong> {{ booking.start_time }} <br>
+                                <strong>End Time:</strong> {{ booking.end_time }} <br>
+                            </div>
+                            <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-danger btn-sm cancel-button">Cancel Booking</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No bookings available.</p>
+            {% endif %}
+        </div>
+
+        <p class="mt-4">
+            <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>  <!-- Link to custom logout -->
+        </p>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
