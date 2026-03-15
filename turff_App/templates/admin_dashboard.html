@@ -1,85 +1,281 @@
+{% extends 'base.html' %}
 
-    <h1 class="text-center mt-5">Admin Dashboard</h1>
-    <a href="{% url 'admin_logout' %}">logout</a>
-    <!-- Summary -->
-    <div class="row mt-5">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h3 class="card-title">Total Bookings</h3>
-                    <p class="card-text">{{ total_bookings }}</p>
+{% block title %}Admin Dashboard - Go Truf{% endblock %}
+
+{% block extra_head %}
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        height: 100%;
+    }
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    .stat-icon.primary { background: #e0e7ff; color: var(--primary-color); }
+    .stat-icon.success { background: #dcfce7; color: var(--accent-color); }
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0;
+    }
+    .stat-label {
+        color: var(--text-muted);
+        font-weight: 500;
+        margin: 0;
+    }
+    .dashboard-section {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .table-custom th {
+        background-color: #f8fafc;
+        color: var(--text-muted);
+        font-weight: 600;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .table-custom td {
+        vertical-align: middle;
+        color: var(--text-dark);
+    }
+    .chart-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        max-width: 350px;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold mb-1">Admin Dashboard</h1>
+            <p class="text-muted">Platform overview and system metrics.</p>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6 col-lg-4">
+            <div class="stat-card">
+                <div class="stat-icon primary">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div>
+                    <p class="stat-value">{{ total_bookings }}</p>
+                    <p class="stat-label">Total Bookings</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h3 class="card-title">Total Turfs</h3>
-                    <p class="card-text">{{ total_turfs }}</p>
+        <div class="col-md-6 col-lg-4">
+            <div class="stat-card">
+                <div class="stat-icon success">
+                    <i class="bi bi-geo-alt"></i>
+                </div>
+                <div>
+                    <p class="stat-value">{{ total_turfs }}</p>
+                    <p class="stat-label">Registered Turfs</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #fef08a; color: #ca8a04;">
+                    <i class="bi bi-currency-rupee"></i>
+                </div>
+                <div>
+                    <p class="stat-value">₹{{ total_revenue|floatformat:0 }}</p>
+                    <p class="stat-label">Total Revenue</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Pie Chart: Turf Usage -->
-    <div class="mt-5">
-        <h3 class="text-center">Turf Usage</h3>
-        <canvas id="turfUsageChart" width="300" height="300"></canvas>
+    <div class="row g-4 mb-5">
+        <!-- Revenue by Turf Chart -->
+        <div class="col-lg-6">
+            <div class="dashboard-section h-100">
+                <h4 class="fw-bold mb-4">Revenue by Turf</h4>
+                <div class="chart-container" style="width: 100%; height: 300px; max-width: none;">
+                    <canvas id="revenueByTurfChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bookings Trend Chart -->
+        <div class="col-lg-6">
+            <div class="dashboard-section h-100">
+                <h4 class="fw-bold mb-4">Trend (Last 7 Days)</h4>
+                <div class="chart-container" style="width: 100%; height: 300px; max-width: none;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4 mb-5">
+        <!-- Booking List -->
+        <div class="col-12">
+            <div class="dashboard-section mb-0">
+                <h4 class="fw-bold mb-4">Upcoming Bookings</h4>
+                <div class="table-responsive">
+                    <table class="table table-hover table-custom mb-0">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Turf Name</th>
+                                <th>Date</th>
+                                <th>Time Slot</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                                <tr>
+                                    <td class="fw-semibold">{{ booking.user_name }}</td>
+                                    <td>{{ booking.turf.turffname }}</td>
+                                    <td>{{ booking.booking_date|date:"M d, Y" }}</td>
+                                    <td><span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle">{{ booking.start_time|time:"H:i" }} - {{ booking.end_time|time:"H:i" }}</span></td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">No upcoming bookings found.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Booking List -->
-    <h3 class="mt-5">Upcoming Bookings</h3>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>User</th>
-                <th>Turf</th>
-                <th>Booking Date</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for booking in bookings %}
-                <tr>
-                    <td>{{ booking.user_name }}</td>
-                    <td>{{ booking.turf.turffname }}</td>
-                    <td>{{ booking.booking_date }}</td>
-                    <td>{{ booking.start_time }}</td>
-                    <td>{{ booking.end_time }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="row g-4 mb-5">
+        <!-- Turf Management List -->
+        <div class="col-12">
+            <div class="dashboard-section h-100">
+                <h4 class="fw-bold mb-4">Registered Turfs Management</h4>
+                <div class="table-responsive">
+                    <table class="table table-hover table-custom mb-0">
+                        <thead>
+                            <tr>
+                                <th>Turf Name</th>
+                                <th>Owner</th>
+                                <th>Location</th>
+                                <th>Total Bookings</th>
+                                <th>Total Sales</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for turf in turfs %}
+                                <tr>
+                                    <td class="fw-semibold">{{ turf.turffname }}</td>
+                                    <td>{{ turf.owner.user.username|default:"Unknown" }}</td>
+                                    <td>{{ turf.location }}</td>
+                                    <td>{{ turf.booking_count }}</td>
+                                    <td class="fw-semibold text-success">₹{{ turf.total_revenue|floatformat:0 }}</td>
+                                    <td class="text-end">
+                                        <a href="{% url 'delete_turf' turf.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('WARNING: Are you sure you want to delete the turf \'{{ turf.turffname|escapejs }}\'? This action cannot be undone and will remove all associated bookings.');">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No turfs registered on the platform.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        // Generate Pie Chart using Chart.js
-        var ctx = document.getElementById('turfUsageChart').getContext('2d');
-        var turfUsageChart = new Chart(ctx, {
-            type: 'pie',
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Bar Chart - Revenue By Turf
+        var ctxBar = document.getElementById('revenueByTurfChart').getContext('2d');
+        new Chart(ctxBar, {
+            type: 'bar',
             data: {
-                labels: [{% for turf in turfs %}'{{ turf.turffname }}',{% endfor %}],
+                labels: {{ revenue_by_turf_labels|safe }},
                 datasets: [{
-                    data: [{% for turf in turfs %}{{ turf.booking_count }},{% endfor %}],
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                    label: 'Revenue (₹)',
+                    data: {{ revenue_by_turf_data|safe }},
+                    backgroundColor: '#2563eb',
+                    borderRadius: 6
                 }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true }
+                }
             }
         });
-    </script>
 
-    <!-- Custom CSS for Chart Size -->
-    <style>
-        #turfUsageChart {
-            max-width: 400px; /* Reduce the size of the chart */
-            margin: 0 auto; /* Center the chart */
-        }
-
-        .summary .card {
-            margin-bottom: 15px;
-        }
-    </style>
-
-    <!-- Include Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-
+        // Line Chart - Trend
+        var ctxLine = document.getElementById('trendChart').getContext('2d');
+        new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: {{ trend_labels|safe }},
+                datasets: [
+                    {
+                        label: 'Revenue (₹)',
+                        data: {{ revenue_trend_data|safe }},
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Bookings',
+                        data: {{ bookings_trend_data|safe }},
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4,
+                        fill: false,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { type: 'linear', display: true, position: 'left', beginAtZero: true, grid: { color: "#e2e8f0" } },
+                    y1: { type: 'linear', display: true, position: 'right', beginAtZero: true, grid: { drawOnChartArea: false } }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

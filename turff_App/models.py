@@ -48,3 +48,10 @@ class Booking(models.Model):
 
     def __str__(self):
         return f"Booking for {self.turf} by {self.user_name} on {self.booking_date}"
+
+class TurfImage(models.Model):
+    turf = models.ForeignKey(Turf, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='turf_images/')
+
+    def __str__(self):
+        return f"Image for {self.turf.turffname}"

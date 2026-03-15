@@ -2,105 +2,160 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking Invoice</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <title>Booking Invoice - {{ booking.id }}</title>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            background-color: #f8f9fa; 
+        @page {
+            size: a4;
+            margin: 2cm;
+            @frame footer {
+                -pdf-frame-content: footerContent;
+                bottom: 0cm;
+                margin-left: 2cm;
+                margin-right: 2cm;
+                height: 1cm;
+            }
         }
-        .header { 
-            text-align: center; 
-            margin-bottom: 30px; 
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            color: #333333;
+            line-height: 1.5;
+            font-size: 14px;
         }
-        .header h1 { 
-            color: #007bff; 
-            font-weight: bold; 
+        .invoice-box {
+            max-width: 800px;
+            margin: auto;
+            padding: 30px;
+            border: 1px solid #eeeeee;
         }
-        .content { 
-            background: white; 
-            padding: 30px; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); 
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 20px;
         }
-        .footer { 
-            margin-top: 30px; 
-            text-align: center; 
-            color: #6c757d; 
+        .header h1 {
+            color: #2563eb;
+            font-size: 28px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+        .header p {
+            color: #64748b;
+            margin: 5px 0 0 0;
+            font-size: 14px;
+        }
+        .info-section {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        .info-section td {
+            padding: 5px;
+            vertical-align: top;
+        }
+        .info-title {
+            font-weight: bold;
+            color: #64748b;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .details-table th, .details-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .details-table th {
+            background-color: #f8fafc;
+            color: #64748b;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+        .details-table tr.total-row td {
+            border-top: 2px solid #2563eb;
+            font-weight: bold;
+            font-size: 16px;
+            color: #1e293b;
         }
         .total-price {
-            font-size: 1.5em; 
-            font-weight: bold; 
-            color: #28a745; 
+            color: #10b981;
         }
-        table {
-            width: 100%; 
-            margin: 20px 0; 
-            border-collapse: collapse; 
-        }
-        th, td {
-            padding: 10px; 
-            border: 1px solid #dee2e6; 
-            text-align: left; 
-        }
-        th {
-            background-color: #007bff; 
-            color: white; 
+        #footerContent {
+            text-align: center;
+            font-size: 10px;
+            color: #94a3b8;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="container mt-5">
+    <div class="invoice-box">
         <div class="header">
-            <h1>Booking Invoice</h1>
-            <h2>Turf Booking Details</h2>
+            <h1>Go Truf</h1>
+            <p>Booking Confirmed - Invoice #{{ booking.id }}</p>
         </div>
-        <div class="content">
-            <table>
+
+        <table class="info-section">
+            <tr>
+                <td width="50%">
+                    <div class="info-title">Turf Details:</div>
+                    <strong>{{ booking.turf.turffname }}</strong><br>
+                    Location: {{ booking.turf.location }}<br>
+                    Type: {{ booking.turf.turf_type }}<br>
+                    Phone: {{ booking.turf.phone_number }}
+                </td>
+                <td width="50%">
+                    <div class="info-title">Billed To:</div>
+                    <strong>{{ booking.user_name }}</strong><br>
+                    Phone: {{ booking.user_phone }}<br><br>
+                    <div class="info-title">Booking Date:</div>
+                    <strong>{{ booking.booking_date|date:"F d, Y" }}</strong>
+                </td>
+            </tr>
+        </table>
+
+        <table class="details-table">
+            <thead>
                 <tr>
-                    <th>Turf Name</th>
-                    <td>{{ booking.turf.turffname }}</td>
+                    <th>Item Description</th>
+                    <th>Time Slot</th>
+                    <th>Rate/Hr</th>
+                    <th align="right">Amount</th>
                 </tr>
+            </thead>
+            <tbody>
                 <tr>
-                    <th>Location</th>
-                    <td>{{ booking.turf.location }}</td>
+                    <td>Turf Rental - {{ booking.turf.turf_type }}</td>
+                    <td>{{ booking.start_time|time:"H:i A" }} - {{ booking.end_time|time:"H:i A" }}</td>
+                    <td>INR {{ booking.turf.price }}</td>
+                    <td align="right">-</td> <!-- We'd ideally calculate this per row if we had multiple items -->
                 </tr>
+                <!-- Spacer Row -->
                 <tr>
-                    <th>User Name</th>
-                    <td>{{ booking.user_name }}</td>
+                    <td colspan="4" style="border:none; height:20px;"></td>
                 </tr>
-                <tr>
-                    <th>User Phone</th>
-                    <td>{{ booking.user_phone }}</td>
+                <tr class="total-row">
+                    <td colspan="3" align="right">Total Payable:</td>
+                    <td align="right" class="total-price">INR {{ total_price }}</td>
                 </tr>
-                <tr>
-                    <th>Booking Date</th>
-                    <td>{{ booking.booking_date }}</td>
-                </tr>
-                <tr>
-                    <th>Start Time</th>
-                    <td>{{ booking.start_time }}</td>
-                </tr>
-                <tr>
-                    <th>End Time</th>
-                    <td>{{ booking.end_time }}</td>
-                </tr>
-                <tr>
-                    <th>Total Price</th>
-                    <td class="total-price">₹ {{ total_price }}</td>
-                </tr>
-            </table>
-        </div>
-        <div class="footer">
-            <p>Thank you for booking with us!</p>
-        </div>
+            </tbody>
+        </table>
+        
+        <p style="margin-top: 40px; font-size: 12px; color: #64748b; text-align: center;">
+            Please present this booking slip at the turf upon arrival.<br>
+            Cancellations must be made through the owner dashboard.
+        </p>
+
     </div>
 
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- PDF Footer -->
+    <div id="footerContent">
+        Go Truf Booking System - Generated on {% now "F d, Y H:i" %}
+    </div>
 </body>
 </html>

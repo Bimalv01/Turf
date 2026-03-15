@@ -1,60 +1,89 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Turf Owner</title>
-    <!-- Bootstrap CSS (CDN) -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .container {
-            max-width: 600px;
-            margin-top: 50px;
-        }
-        .form-container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .form-container h1 {
-            margin-bottom: 20px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        button {
-            width: 100%;
-            background-color: #007bff;
-            color: white;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .register-link {
-            text-align: center;
-            margin-top: 20px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="form-container">
-            <h1 class="text-center">Login as a Turf Owner</h1>
-            <form method="POST">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn btn-primary">Login</button>
-            </form>
-            <p class="register-link">Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
+{% extends 'base.html' %}
+
+{% block title %}Owner Login - Go Truf{% endblock %}
+
+{% block extra_head %}
+<style>
+    .auth-container {
+        min-height: calc(100vh - 160px); /* Adjust based on navbar + footer height */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+    .auth-card {
+        background: white;
+        padding: 2.5rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 450px;
+        border: 1px solid #e2e8f0;
+    }
+    .auth-logo {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .auth-logo i {
+        font-size: 3rem;
+        color: var(--primary-color);
+    }
+    /* Style Django form elements */
+    .auth-card input {
+        display: block;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: var(--text-dark);
+        background-color: #f8fafc;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        margin-bottom: 1rem;
+    }
+    .auth-card input:focus {
+        background-color: white;
+        border-color: var(--primary-color);
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.25);
+    }
+    .auth-card label {
+        display: inline-block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--text-muted);
+    }
+    .helptext {
+        font-size: 0.85em;
+        color: var(--text-muted);
+        display: block;
+        margin-top: -0.5rem;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <i class="bi bi-person-badge"></i>
+            <h2 class="fw-bold mt-2">Owner Login</h2>
+            <p class="text-muted">Welcome back! Manage your turfs.</p>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            
+            <button type="submit" class="btn btn-primary w-100 py-2 mt-3 fw-bold">Login</button>
+        </form>
+        
+        <div class="text-center mt-4 pt-3 border-top">
+            <p class="text-muted mb-0">Don't have an account? <a href="{% url 'register' %}" class="text-primary text-decoration-none fw-semibold">Register here</a></p>
         </div>
     </div>
-
-    <!-- Bootstrap JS and Popper.js (CDN) -->
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
-</body>
-</html>
+</div>
+{% endblock %}

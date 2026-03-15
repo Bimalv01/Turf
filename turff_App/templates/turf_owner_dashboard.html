@@ -1,81 +1,285 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf Owner Dashboard</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            padding: 20px;
-        }
-        h1 {
-            color: #007bff;
-        }
-        .booking-list {
-            margin-top: 20px;
-        }
-        .cancel-button {
-            float: right; /* Align cancel button to the right */
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Turf Owner Dashboard</h1>
-        
-        <div class="mt-4">
-            <h2>Your Turfs</h2>
-            <a href="{% url 'add_turf' %}" class="btn btn-primary mb-3">Add New Turf</a>
-            <ul class="list-group">
-                {% for turf in turfs %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ turf.turffname }} - Price:  ₹ {{ turf.price }} per hour
-                    </li>
-                {% empty %}
-                    <li class="list-group-item">No turfs available.</li>
-                {% endfor %}
-            </ul>
+{% extends 'base.html' %}
+
+{% block title %}Owner Dashboard - Go Truf{% endblock %}
+
+{% block extra_head %}
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    .stat-icon.primary { background: #e0e7ff; color: var(--primary-color); }
+    .stat-icon.success { background: #dcfce7; color: var(--accent-color); }
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0;
+    }
+    .stat-label {
+        color: var(--text-muted);
+        font-weight: 500;
+        margin: 0;
+    }
+    .dashboard-section {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .table-custom th {
+        background-color: #f8fafc;
+        color: var(--text-muted);
+        font-weight: 600;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .table-custom td {
+        vertical-align: middle;
+        color: var(--text-dark);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold mb-1">Owner Dashboard</h1>
+            <p class="text-muted">Welcome back, manage your turfs and bookings here.</p>
         </div>
-
-        <div class="booking-list">
-            <h2>Your Bookings</h2>
-            <form method="GET" class="form-inline mb-3">
-                <label for="filter-date" class="mr-2">Filter by Date:</label>
-                <input type="date" id="filter-date" name="date" class="form-control mr-2" required>
-                <button type="submit" class="btn btn-secondary">Filter</button>
-            </form>
-
-            {% if bookings %}
-                <ul class="list-group">
-                    {% for booking in bookings %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>User Name:</strong> {{ booking.user_name }} <br>
-                                <strong>Phone:</strong> {{ booking.user_phone }} <br>
-                                <strong>Turf:</strong> {{ booking.turf.turffname }} <br>
-                                <strong>Booking Date:</strong> {{ booking.booking_date }} <br>
-                                <strong>Start Time:</strong> {{ booking.start_time }} <br>
-                                <strong>End Time:</strong> {{ booking.end_time }} <br>
-                            </div>
-                            <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-danger btn-sm cancel-button">Cancel Booking</a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>No bookings available.</p>
-            {% endif %}
-        </div>
-
-        <p class="mt-4">
-            <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>  <!-- Link to custom logout -->
-        </p>
+        <a href="{% url 'add_turf' %}" class="btn btn-primary d-flex align-items-center gap-2">
+            <i class="bi bi-plus-circle"></i> Add New Turf
+        </a>
     </div>
 
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-</html>
+    <!-- Stats Overview -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon primary">
+                    <i class="bi bi-geo-alt"></i>
+                </div>
+                <div>
+                    <p class="stat-value">{{ total_turfs }}</p>
+                    <p class="stat-label">Total Turfs</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon success">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div>
+                    <p class="stat-value">{{ total_bookings }}</p>
+                    <p class="stat-label">Total Bookings</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #fef08a; color: #ca8a04;">
+                    <i class="bi bi-currency-rupee"></i>
+                </div>
+                <div>
+                    <p class="stat-value">₹{{ total_revenue|floatformat:0 }}</p>
+                    <p class="stat-label">Total Revenue</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <!-- Turfs Usage Chart -->
+        <div class="col-lg-5">
+            <div class="dashboard-section h-100">
+                <h4 class="fw-bold mb-4">Bookings per Turf</h4>
+                <div class="chart-container" style="max-width: 350px; margin: 0 auto;">
+                    <canvas id="turfsDoughnutChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bookings Trend Chart -->
+        <div class="col-lg-7">
+            <div class="dashboard-section h-100">
+                <h4 class="fw-bold mb-4">Bookings Trend (Last 7 Days)</h4>
+                <div class="chart-container" style="width: 100%; height: 300px; max-width: none;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Your Turfs Section -->
+    <div class="dashboard-section">
+        <h3 class="fw-bold mb-4">Your Turfs</h3>
+        <div class="table-responsive">
+            <table class="table table-hover table-custom mb-0">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Turf Name</th>
+                        <th>Location</th>
+                        <th>Type</th>
+                        <th>Price/Hour</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for turf in turfs %}
+                    <tr>
+                        <td>
+                            {% if turf.images.first %}
+                                <img src="{{ turf.images.first.image.url }}" class="rounded shadow-sm" style="width: 50px; height: 50px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center text-muted" style="width: 50px; height: 50px;">
+                                    <i class="bi bi-image" style="font-size: 1.2rem;"></i>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td class="fw-semibold">{{ turf.turffname }}</td>
+                        <td>{{ turf.location }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ turf.turf_type }}</span></td>
+                        <td class="fw-semibold">₹{{ turf.price }}</td>
+                        <td class="text-end">
+                            <!-- Placeholder for future edit action -->
+                            <a href="#" class="btn btn-sm btn-outline-secondary disabled"><i class="bi bi-pencil"></i> Edit</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">You haven't added any turfs yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Your Bookings Section -->
+    <div class="dashboard-section">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <h3 class="fw-bold mb-0">Your Bookings</h3>
+            
+            <form method="GET" class="d-flex align-items-center gap-2">
+                <label for="filter-date" class="form-label mb-0 text-muted fw-semibold">Filter Date:</label>
+                <input type="date" id="filter-date" name="date" class="form-control form-control-sm w-auto" value="{{ request.GET.date }}" required>
+                <button type="submit" class="btn btn-secondary btn-sm">Apply</button>
+                {% if request.GET.date %}
+                    <a href="?" class="btn btn-outline-secondary btn-sm">Clear</a>
+                {% endif %}
+            </form>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-custom mb-0">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Contact</th>
+                        <th>Turf</th>
+                        <th>Date</th>
+                        <th>Time Slot</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td class="fw-semibold">{{ booking.user_name }}</td>
+                        <td><i class="bi bi-telephone text-muted"></i> {{ booking.user_phone }}</td>
+                        <td>{{ booking.turf.turffname }}</td>
+                        <td>{{ booking.booking_date|date:"M d, Y" }}</td>
+                        <td><span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle">{{ booking.start_time|time:"H:i" }} - {{ booking.end_time|time:"H:i" }}</span></td>
+                        <td class="text-end">
+                            <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to cancel this booking?');">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No bookings found for the selected date.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Doughnut Chart - Bookings per Turf
+        var ctxDoughnut = document.getElementById('turfsDoughnutChart').getContext('2d');
+        new Chart(ctxDoughnut, {
+            type: 'doughnut',
+            data: {
+                labels: [{% for turf in turfs %}'{{ turf.turffname|escapejs }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+                datasets: [{
+                    data: [{% for turf in turfs %}{{ turf.booking_count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { family: "'Inter', sans-serif" } } }
+                },
+                cutout: '65%'
+            }
+        });
+
+        // Line Chart - Trend
+        var ctxLine = document.getElementById('trendChart').getContext('2d');
+        new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: {{ trend_labels|safe }},
+                datasets: [
+                    {
+                        label: 'Bookings',
+                        data: {{ bookings_trend_data|safe }},
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        yAxisID: 'y'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { type: 'linear', display: true, position: 'left', beginAtZero: true, grid: { color: "#e2e8f0" }, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

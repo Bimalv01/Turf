@@ -1,85 +1,238 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf Search</title>
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #f8f9fa;
-        }
-        .search-form {
-            margin-bottom: 30px;
-            padding: 20px;
-            background-color: #ffffff;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-        }
-        .result-list li {
-            background-color: #ffffff;
-            padding: 15px;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }
-        .btn-book {
-            float: right;
-        }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Find Turfs - Go Truf{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, rgba(37,99,235,0.95) 0%, rgba(59,130,246,0.85) 100%), url('https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=1200&auto=format&fit=crop') center/cover;
+        color: white;
+        padding: 5rem 0 6rem;
+        text-align: center;
+        border-radius: 0 0 40px 40px;
+        margin-bottom: -3rem;
+        position: relative;
+        z-index: 0;
+    }
+    .hero-title {
+        font-weight: 800;
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+        letter-spacing: -1px;
+    }
+    .hero-subtitle {
+        font-size: 1.25rem;
+        opacity: 0.9;
+        margin-bottom: 2.5rem;
+        font-weight: 400;
+    }
+
+    /* Floating Search Bar */
+    .search-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        max-width: 800px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 10;
+        transform: translateY(3rem);
+    }
+    
+    .search-card .form-control, .search-card .form-select {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        background-color: #f8fafc;
+        transition: all 0.2s;
+    }
+    .search-card .form-control:focus, .search-card .form-select:focus {
+        background-color: white;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    
+    /* Search Results Grid */
+    .results-section {
+        padding: 6rem 0 4rem;
+        background-color: var(--bg-light);
+    }
+
+    .turf-card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .turf-image-placeholder {
+        height: 200px;
+        background: linear-gradient(45deg, #e2e8f0, #cbd5e1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        font-size: 3rem;
+    }
+    .turf-card-body {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .turf-title {
+        font-weight: 700;
+        font-size: 1.25rem;
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+    }
+    .turf-detail {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .badge-turf {
+        background-color: #e0e7ff;
+        color: var(--primary-color);
+        font-weight: 600;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
+    .price-tag {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-top: auto;
+        padding-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
     <div class="container">
-        <h1 class="text-center my-4">Search for Turfs</h1>
+        <h1 class="hero-title">Play Your Best Game.</h1>
+        <p class="hero-subtitle">Discover and book premium turfs near you in seconds.</p>
+        
+        <!-- Floating Search Card -->
+        <div class="search-card">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-5 text-start">
+                    <label for="location" class="form-label text-muted fw-semibold small mb-1"><i class="bi bi-geo-alt"></i> Location</label>
+                    <select name="location" id="location" class="form-select">
+                        <option value="">All Locations</option>
+                        {% for location in locations %}
+                            <option value="{{ location }}" {% if request.GET.location == location %}selected{% endif %}>{{ location }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- Assuming form.turf_type renders a select element, wrap it beautifully -->
+                <div class="col-md-5 text-start">
+                    <label class="form-label text-muted fw-semibold small mb-1"><i class="bi bi-diagram-3"></i> Turf Size</label>
+                    <div class="turf-type-wrapper">
+                        {{ form.turf_type }}
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
 
-        <!-- Search Form -->
-        <form method="GET" class="search-form">
-            {% csrf_token %}
-            {{ form.turf_type }} <!-- Only display turf type from the form -->
-            
-            <!-- Dropdown for Available Locations -->
-            <div class="form-group">
-                <label for="location">Available Locations</label>
-                <select name="location" id="location" class="form-control">
-                    <option value="">Select Location</option>
-                    {% for location in locations %}
-                        <option value="{{ location }}">{{ location }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <button type="submit" class="btn btn-primary">Search</button>
-        </form>
+<!-- Results Section -->
+<section class="results-section">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <h2 class="fw-bold mb-0 text-dark">Available Turfs</h2>
+            {% if request.GET.location or request.GET.turf_type %}
+                <span class="badge bg-secondary">Filtered Results</span>
+            {% endif %}
+        </div>
 
-        <!-- Search Results -->
-        <h2 class="mt-4">Search Results</h2>
-        <ul class="list-group result-list">
+        <div class="row g-4">
             {% if results %}
                 {% for turf in results %}
-                    <li class="list-group-item">
-                        <div>
-                            <strong>{{ turf.turffname }}</strong><br>
-                            {{ turf.location }} - {{ turf.turf_type }}
-                            <form action="{% url 'book_turf' turf.id %}" method="GET" class="btn-book">
-                                <button type="submit" class="btn btn-success btn-sm">Book Now</button>
-                            </form>
+                <div class="col-md-6 col-lg-4">
+                    <div class="premium-card turf-card">
+                        <div class="position-relative">
+                            {% if turf.images.all %}
+                                <div id="carousel-{{ turf.id }}" class="carousel slide" data-bs-ride="carousel">
+                                    <div class="carousel-inner">
+                                        {% for img in turf.images.all %}
+                                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                                <img src="{{ img.image.url }}" class="d-block w-100" style="height: 200px; object-fit: cover;" alt="{{ turf.turffname }}">
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% if turf.images.count > 1 %}
+                                        <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ turf.id }}" data-bs-slide="prev">
+                                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                        </button>
+                                        <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ turf.id }}" data-bs-slide="next">
+                                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="turf-image-placeholder">
+                                    <i class="bi bi-image"></i>
+                                </div>
+                            {% endif %}
                         </div>
-                    </li>
-                {% empty %}
-                    <li class="list-group-item">No turfs found.</li>
+                        <div class="turf-card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h3 class="turf-title m-0">{{ turf.turffname }}</h3>
+                                <span class="badge-turf">{{ turf.turf_type }}</span>
+                            </div>
+                            
+                            <p class="turf-detail"><i class="bi bi-geo-alt text-danger"></i> {{ turf.location }}</p>
+                            <p class="turf-detail"><i class="bi bi-telephone text-success"></i> {{ turf.phone_number }}</p>
+                            
+                            <div class="d-flex justify-content-between align-items-end mt-4 pt-3 border-top">
+                                <span class="price-tag">₹{{ turf.price }}<span class="fs-6 text-muted fw-normal">/hr</span></span>
+                                <a href="{% url 'book_turf' turf.id %}" class="btn btn-primary px-4 rounded-pill">Book Now</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 {% endfor %}
             {% else %}
-                <li class="list-group-item">No search results yet.</li>
+                <div class="col-12 text-center py-5">
+                    <div class="display-1 text-muted mb-4"><i class="bi bi-search"></i></div>
+                    <h3 class="fw-bold text-dark">No Turfs Found</h3>
+                    <p class="text-muted">Try adjusting your search filters to find more locations.</p>
+                    <a href="/" class="btn btn-outline-primary mt-2">Clear Filters</a>
+                </div>
             {% endif %}
-        </ul>
+        </div>
     </div>
+</section>
 
-    <!-- Bootstrap JS, Popper.js, and jQuery -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.6.0/dist/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-</html>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Style the Django form turf_type select field to match Bootstrap
+    document.addEventListener("DOMContentLoaded", function() {
+        var turfSelect = document.querySelector('select[name="turf_type"]');
+        if (turfSelect) {
+            turfSelect.classList.add('form-select');
+            // Check if there is a selected value from GET, if not default
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('turf_type')) {
+                turfSelect.value = urlParams.get('turf_type');
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,10 +1,18 @@
 # turff_App/views.py
 
 from decimal import Decimal
+from datetime import datetime, timedelta
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import login, authenticate
 from .forms import *
 from .models import *
+
+def get_booking_revenue(booking):
+    start_dt = datetime.combine(booking.booking_date, booking.start_time)
+    end_dt = datetime.combine(booking.booking_date, booking.end_time)
+    duration_hours = Decimal((end_dt - start_dt).total_seconds() / 3600)
+    return duration_hours * booking.turf.price
+
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.decorators import login_required
@@ -37,24 +45,64 @@ def admin_login(request):
 
 @login_required
 def admin_dashboard(request):
-    # Fetch total bookings, total turfs
     total_bookings = Booking.objects.count()
     total_turfs = Turf.objects.count()
-
-    # Fetch bookings count by turf (used in pie chart)
     turfs = Turf.objects.annotate(booking_count=Count('bookings')).all()
+    bookings = Booking.objects.all().order_by('booking_date')[:10]
 
-    # Fetch upcoming bookings for the table
-    bookings = Booking.objects.all().order_by('booking_date')[:10]  # Limiting to the top 10 bookings
+    total_revenue = Decimal(0)
+    revenue_by_turf_dict = {}
+    
+    today = datetime.today().date()
+    last_7_days = [(today - timedelta(days=i)) for i in range(6, -1, -1)]
+    
+    bookings_trend_dict = {date: 0 for date in last_7_days}
+    revenue_trend_dict = {date: Decimal(0) for date in last_7_days}
+    
+    all_bookings = Booking.objects.select_related('turf').all()
+    for b in all_bookings:
+        rev = get_booking_revenue(b)
+        total_revenue += rev
+        
+        turf_name = b.turf.turffname
+        revenue_by_turf_dict[turf_name] = revenue_by_turf_dict.get(turf_name, Decimal(0)) + rev
+        
+        if b.booking_date in bookings_trend_dict:
+            bookings_trend_dict[b.booking_date] += 1
+            revenue_trend_dict[b.booking_date] += rev
+
+    # Attach revenue data directly to the turfs so we can show it in the table
+    for turf_obj in turfs:
+        turf_obj.total_revenue = revenue_by_turf_dict.get(turf_obj.turffname, Decimal(0))
+
+    revenue_by_turf_labels = list(revenue_by_turf_dict.keys())
+    revenue_by_turf_data = [float(v) for v in revenue_by_turf_dict.values()]
+    
+    trend_labels = [d.strftime('%b %d') for d in last_7_days]
+    bookings_trend_data = [bookings_trend_dict[d] for d in last_7_days]
+    revenue_trend_data = [float(revenue_trend_dict[d]) for d in last_7_days]
 
     context = {
         'total_bookings': total_bookings,
         'total_turfs': total_turfs,
+        'total_revenue': total_revenue,
         'turfs': turfs,
         'bookings': bookings,
+        'revenue_by_turf_labels': revenue_by_turf_labels,
+        'revenue_by_turf_data': revenue_by_turf_data,
+        'trend_labels': trend_labels,
+        'bookings_trend_data': bookings_trend_data,
+        'revenue_trend_data': revenue_trend_data,
     }
 
     return render(request, 'admin_dashboard.html', context)
+
+@user_passes_test(lambda u: u.is_superuser)
+def delete_turf(request, turf_id):
+    turf = get_object_or_404(Turf, id=turf_id)
+    turf.delete()
+    messages.success(request, f'Turf "{turf.turffname}" has been deleted successfully.')
+    return redirect('admin_dashboard')
 
 def admin_logout(request):
     logout(request)
@@ -108,28 +156,41 @@ from .decorators import custom_login_required
 
 @custom_login_required
 def turf_owner_dashboard(request):
-    # Get the TurfOwner instance for the logged-in user
-    owner = TurfOwner.objects.get(user=request.user)  
-    # Get all turfs owned by the owner
-    turfs = Turf.objects.filter(owner=owner)  
-    # Get all bookings for the owner's turfs
-    bookings = Booking.objects.filter(turf__owner=owner)  
+    owner = TurfOwner.objects.get(user=request.user)
+    turfs = Turf.objects.filter(owner=owner).prefetch_related('images').annotate(booking_count=Count('bookings'))
+    bookings_qs = Booking.objects.filter(turf__owner=owner).select_related('turf')
+    
+    total_revenue = Decimal(0)
+    today = datetime.today().date()
+    last_7_days = [(today - timedelta(days=i)) for i in range(6, -1, -1)]
+    bookings_trend_dict = {date: 0 for date in last_7_days}
+    
+    for b in bookings_qs:
+        total_revenue += get_booking_revenue(b)
+        if b.booking_date in bookings_trend_dict:
+            bookings_trend_dict[b.booking_date] += 1
+            
+    trend_labels = [d.strftime('%b %d') for d in last_7_days]
+    bookings_trend_data = [bookings_trend_dict[d] for d in last_7_days]
 
-    # Check if a date filter is applied
+    # For table display
+    table_bookings = bookings_qs
     filter_date = request.GET.get('date')
     if filter_date:
         try:
-            # Convert the filter_date to a date object
             filter_date = datetime.strptime(filter_date, '%Y-%m-%d').date()
-            # Filter bookings by the selected date
-            bookings = bookings.filter(booking_date=filter_date)
+            table_bookings = table_bookings.filter(booking_date=filter_date)
         except ValueError:
-            # Handle the case where the date conversion fails
-            bookings = bookings  # Keep all bookings if the date is invalid
+            pass
 
     context = {
         'turfs': turfs,
-        'bookings': bookings,
+        'bookings': table_bookings,
+        'total_revenue': total_revenue,
+        'trend_labels': trend_labels,
+        'bookings_trend_data': bookings_trend_data,
+        'total_turfs': turfs.count(),
+        'total_bookings': bookings_qs.count()
     }
     return render(request, 'turf_owner_dashboard.html', context)
 
@@ -153,9 +214,17 @@ def add_turf(request):
         form = TurfForm(request.POST)
         if form.is_valid():
             turf = form.save(commit=False)
-            turf.owner = TurfOwner.objects.get(user=request.user)  # Set the turf owner to the logged-in user
+            owner = TurfOwner.objects.get(user=request.user)  # Set the turf owner to the logged-in user
+            turf.owner = owner
             turf.save()
-            return redirect('turf_owner_dashboard')  # Redirect to the dashboard after adding
+            
+            # Save images
+            images = request.FILES.getlist('images')
+            for img in images:
+                TurfImage.objects.create(turf=turf, image=img)
+                
+            messages.success(request, 'Turf and images added successfully!')
+            return redirect('turf_owner_dashboard')
     else:
         form = TurfForm()
 
@@ -171,7 +240,7 @@ def home(request):
     turf_type = form.cleaned_data.get('turf_type') if form.is_valid() else None
 
     # Filter turfs based on user inputs
-    queryset = Turf.objects.all()
+    queryset = Turf.objects.prefetch_related('images').all()
     
     if location:
         queryset = queryset.filter(location__icontains=location)
